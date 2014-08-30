@@ -1,30 +1,54 @@
-#bin/bash
+#!/usr/bin/env bash
 
-# titles of each tab 
-titles=("Mice Server" "Gulp Running" "Code client" "Code server" "Cmd" "Mysql")
+. ~/.cockpit
 
-# list of commands
-commands=(
-	'cd ~/Documents/goservice/documentation/services/bin;./mice'
-	'cd ~/Documents/documentation/microsite; gulp load --client hrsummit'
-	'vim ~/Documents/documentation/microsite/themes/red_cheese/templates/about.jade'
-	'vim ~/Documents/goservice/documentation/services/src/mice/resources/events/events.go'
-	'clear'
-	'mysql -uroot -p'
+args=("$@")
+
+COMMANDS=(
+  '-h:helper'
+  'help:helper'
+  'load:loadCockpit'
 )
 
-# options of gnome-terminal
-tab="--tab"
-fullscreen="--full-screen"
+helper() {
+  echo "cockpit load"
+}
 
-execute=""
+parseConfig() {
+  tab="--tab"
+  fullscreen="--full-screen"
+  
+  execute=""
+  settingsName=${args[1]}
+  settings="$settingsName[@]"
+  
+  for setting in "${!settings}"
+  do
+    echo $setting
+    tabName="${setting%%:*}"
+    tabCmd="${setting##*:}"
 
-count=0;
-for command in "${commands[@]}"; do
-  execute+=($fullscreen $tab --title="${titles[$count]}" -e "bash -c '$command';bash")
-  count=$(( $count + 1 )) 
+    execute+=($fullscreen $tab --title="${tabName}" -e "bash -c '$tabCmd';bash")
+  done
+  
+  gnome-terminal "${execute[@]}"
+}
+
+loadCockpit() {
+  config=${args[1]}
+  
+  parseConfig
+}
+
+for cmd in "${COMMANDS[@]}"
+do
+  key="${cmd%%:*}"
+  value="${cmd##*:}"
+  
+  if [ ${args[0]} == $key ]
+  then
+    eval ${value}
+  fi
 done
-
-gnome-terminal "${execute[@]}"
 
 exit 0
